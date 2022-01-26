@@ -291,43 +291,6 @@ sapply(lc_cont1, lines)
     ## [[1]]
     ## NULL
 
-``` r
-## do bootstrap to get a sense of variance in decision surface
-resample <- function(dat) {
-  idx <- sample(1:length(dat$y), replace = T)
-  dat$y <- dat$y[idx]
-  dat$x <- dat$x[idx,]
-  return(dat)
-}
-```
-
-``` r
-## plot linear classifier for three bootstraps
-par(mfrow=c(1,3))
-for(b in 1:3) {
-  datb <- resample(dat)
-  ## fit model to mixture data and make predictions
-  lc_pred1 <- predict_lc1(datb$x, datb$y, datb$xnew)
-  
-  ## reshape predictions as a matrix
-  lc_pred1 <- matrix(lc_pred1, length(datb$px1), length(datb$px2))
-
-  ## find the contours in 2D space such that lc_pred1 == 0.5
-  lc_cont1 <- contourLines(datb$px1, datb$px2, lc_pred1, levels=0.5)
-  
-  ## plot data and decision surface
-  eval(plot_mix_data)
-  sapply(lc_cont1, lines)
-}
-```
-
-![](machine-learning-homework_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
-
-From the three plots, we can find out that the linear classifier has a
-low variance and high bias, as the decision surface doesn’t change a lot
-when the train data changes, and the classifier has a high probability
-to make a wrong decision (the high bias).
-
 ## Q4: Add squared forms to the model
 
 ``` r
@@ -346,7 +309,7 @@ contour(lc_pred2,
       ylab=expression(x[2]))
 ```
 
-![](machine-learning-homework_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+![](machine-learning-homework_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 # find the contours in 2D space such that lc_pred2 == 0.5
@@ -354,16 +317,29 @@ lc_cont2 <- contourLines(dat$px1, dat$px2, lc_pred2, levels=0.5)
 ```
 
 ``` r
+# Put the bayes decision surface, lm decision surface, and the more flexible decision surface into the same plot. 
 # plot data and decision surface
 eval(plot_mix_data)
 # add the linear classifier
-sapply(lc_cont2, lines)
+sapply(lc_cont1, lines)
 ```
-
-![](machine-learning-homework_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
     ## [[1]]
     ## NULL
+
+``` r
+# add the more flexible classifier
+sapply(lc_cont2, lines, col = "green")
+```
+
+    ## [[1]]
+    ## NULL
+
+``` r
+legend("bottomleft", c("Bayes", "lm", "flexible"), lty = 1, col = c("purple", "black", "green"))
+```
+
+![](machine-learning-homework_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 ## do bootstrap to get a sense of variance in decision surface
@@ -376,28 +352,56 @@ resample <- function(dat) {
 ```
 
 ``` r
+set.seed(100)
 ## plot linear classifier for three bootstraps
 par(mfrow=c(1,3))
 for(b in 1:3) {
   datb <- resample(dat)
   x <- cbind(datb$x, datb$x^2)
   xnew <- cbind(datb$xnew, datb$xnew^2)
-  ## fit model to mixture data and make predictions
+  
+  # linear decision surface
+  # fit model to mixture data and make predictions
+  lc_pred1 <- predict_lc1(datb$x, datb$y, datb$xnew)
+  
+  # reshape predictions as a matrix
+  lc_pred1 <- matrix(lc_pred1, length(datb$px1), length(datb$px2))
+
+  # find the contours in 2D space such that lc_pred1 == 0.5
+  lc_cont1 <- contourLines(datb$px1, datb$px2, lc_pred1, levels=0.5)
+  
+  # more flexible decision surface
+  # fit model to mixture data and make predictions
   lc_pred2 <- predict_lc1(x, datb$y, xnew)
   
-  ## reshape predictions as a matrix
+  # reshape predictions as a matrix
   lc_pred2 <- matrix(lc_pred2, length(datb$px1), length(datb$px2))
 
-  ## find the contours in 2D space such that lc_pred2 == 0.5
+  # find the contours in 2D space such that lc_pred2 == 0.5
   lc_cont2 <- contourLines(datb$px1, datb$px2, lc_pred2, levels=0.5)
   
-  ## plot data and decision surface
+  # plot data and bayes decision surface
   eval(plot_mix_data)
-  sapply(lc_cont2, lines)
+  # add the linear classifier
+  sapply(lc_cont1, lines)
+  # add the more flexible classifier
+  sapply(lc_cont2, lines, col = "green")
+  # add the legend
+  legend("bottomleft", c("Bayes", "lm", "flexible"), lty = 1, col = c("purple", "black", "green"))
 }
 ```
 
-![](machine-learning-homework_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](machine-learning-homework_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+
+In the above plots, it shows the linear decision surface and the more
+flexible decision surface of the resample train datasets. From the
+different decision surfaces, we can find out that the more flexible one
+changes more when the train dataset changes, so we can see that the more
+flexible surface decision has a relatively higher variance than the
+linear decision surface. However, the more flexible decision surface is
+closer to the Bayes decision surface (the right classifier), so we can
+see that the more flexible model has a relatively lower bias than the
+linear classifier.
 
 ## Q5: the bias-variance tradeoff
 
@@ -408,3 +412,7 @@ However, the more flexible classifier has a high variance, as the
 decision surface changes a lot when the train data changes. Thus, we can
 conclude that we should always make a tradeoff between the variance and
 bias.
+
+Based on above, we can get a conclusion that the more flexible model
+affect the bias-variance tradeoff by lowering the bias and increasing
+the variance.
