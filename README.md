@@ -4,6 +4,6 @@ This repo is used for my course work.
 
 Professor name: Matt Shotwell
 
-TA: Tonnar Castellano
+TA: Tonnar Castellano, Ty Painter
 
 Student name: Weixi Chen
