@@ -336,11 +336,11 @@ for(b in 1:3) {
 ```
 
 
-In the above plots, it shows the linear decision surface and the more flexible decision surface of the resample train datasets. From the different decision surfaces, we can find out that the more flexible one changes more when the train dataset changes, so we can see that the more flexible surface decision has a relatively higher variance than the linear decision surface. However, the more flexible decision surface is closer to the Bayes decision surface (the right classifier), so we can see that the more flexible model has a relatively lower bias than the linear classifier.
+In the above plots, it shows the linear decision surface and the more flexible decision surface of the resample train datasets. From the different decision surfaces, we can find out that the more flexible one changes more when the train dataset changes, so we can see that the more flexible model has a relatively higher variance than the original linear model. However, the more flexible decision surface is closer to the Bayes decision surface (the right classifier), so we can see that the more flexible model has a relatively lower bias than the original linear model.
 
 
 ## Q5: the bias-variance tradeoff
 
-From the comparison of the linear classifier and the more flexible classifier, we can find out that the more flexible one has a relatively low bias, as it makes less wrong decision towards different data. However, the more flexible classifier has a high variance, as the decision surface changes a lot when the train data changes. Thus, we can conclude that we should always make a tradeoff between the variance and bias.
+From the comparison of the linear model and the more flexible model, we can find out that the more flexible one has a relatively low bias, as it makes less wrong decision towards different data. However, the more flexible classifier has a high variance, as the decision surface changes a lot when the train data changes. Thus, we can conclude that we should always make a tradeoff between the variance and bias.
 
-Based on above, we can get a conclusion that the more flexible model affect the bias-variance tradeoff by lowering the bias and increasing the variance.
+Based on the above, we can get a conclusion that the more flexible model affects the bias-variance tradeoff by lowering the bias and increasing the variance compared to the original linear model.
