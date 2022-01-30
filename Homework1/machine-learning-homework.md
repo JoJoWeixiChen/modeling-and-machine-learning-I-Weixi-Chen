@@ -420,8 +420,7 @@ From the comparison of the linear model and the more flexible model, we
 can find out that the more flexible one has a relatively low bias, as it
 makes less wrong decision towards different data. However, the more
 flexible classifier has a high variance, as the decision surface changes
-a lot when the train data changes. Thus, we can conclude that we should
-always make a tradeoff between the variance and bias.
+a lot when the train data changes.
 
 Based on the above, we can get a conclusion that the more flexible model
 affects the bias-variance tradeoff by lowering the bias and increasing
