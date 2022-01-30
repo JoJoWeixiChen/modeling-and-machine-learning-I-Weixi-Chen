@@ -405,6 +405,17 @@ model.
 
 ## Q5: the bias-variance tradeoff
 
+The model bias is the difference between the model’s prediction and the
+true value in the training data (or say targeted value). Bias error
+results from simplifying the assumptions used in a model so the target
+functions are easier to approximate.
+
+The model variance is the change in the model when using different
+portions of the training data sets. Simply stated, variance is the
+variability in the model prediction—how much the ML function can adjust
+depending on the given data set. Variance comes from highly complex
+models with a large number of features.
+
 From the comparison of the linear model and the more flexible model, we
 can find out that the more flexible one has a relatively low bias, as it
 makes less wrong decision towards different data. However, the more
