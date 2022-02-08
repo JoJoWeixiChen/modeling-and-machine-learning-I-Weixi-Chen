@@ -1,0 +1,119 @@
+---
+title: "Homework 3"
+author: "Weixi Chen"
+date: "2/4/2022"
+output: github_document
+---
+
+## Question1: Use the prostate cancer data
+
+```{r}
+## load prostate data
+prostate <- 
+  read.table(url(
+    'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/prostate.data'))
+
+## subset to training examples
+prostate_train <- subset(prostate, train==TRUE)
+```
+
+## Question2: reproduce the correlations
+
+```{r}
+cor(prostate[, -grep(c('lcavol|lpsa|train'), colnames(prostate))])
+```
+
+## Question3, Question4: Use lcavol as the outcome to train the lm model
+
+```{r}
+result <- lm(lcavol ~ .-train, data = prostate_train)
+summary(result)
+```
+
+## Question 5: Compute test error
+
+```{r}
+test_result <- predict(result, prostate[which(prostate$train == 'FALSE'),])
+mean((test_result - prostate[which(prostate$train == 'FALSE'),'lcavol'])^2)
+```
+
+```{r}
+## another method
+L2_loss <- function(y, yhat)
+  (y-yhat)^2
+error <- function(dat, fit, loss=L2_loss)
+  mean(loss(dat$lcavol, predict(fit, newdata=dat)))
+
+error(prostate[which(prostate$train == 'FALSE'),], result)
+```
+
+## Question 6, Question7 : Train a ridge regression model and create the figure
+
+```{r}
+library(ggplot2)
+library(glmnet)
+x_train <- as.matrix(prostate_train[, -grep(c('lcavol|train'), colnames(prostate))])
+x_test <- as.matrix(prostate[which(prostate$train == 'FALSE'), -grep(c('lcavol|train'), colnames(prostate))])
+y_train <- prostate_train[,'lcavol']
+y_test <- prostate[which(prostate$train == 'FALSE'), 'lcavol']
+train_error <- c()
+test_error <- c()
+
+for(i in seq(0, 1, length.out = 100)){
+  cv_fit <- glmnet(x_train, prostate_train$lcavol, alpha = 0, lambda = i)
+  cv_predict <- predict(cv_fit, x_test)
+  train_error <- c(train_error, mean((predict(cv_fit, x_train) - y_train)^2))
+  test_error <- c(test_error, mean((predict(cv_fit, x_test) - y_test)^2))
+}
+
+lambda <- seq(0, 1, length.out = 100)
+plot(lambda, train_error, type = "l", col = 2, ylab = "error")
+lines(lambda, test_error, type = "b", col = 3)
+legend("bottomright", c("train error", "test error"), col = c(2, 3), pch = 3)
+
+
+lambda_min_testerr <- lambda[which.min(test_error)]
+lambda_min_testerr
+# The lambda value that could minimize the test error is 0.1111111
+```
+
+## Question 8: Create a path diagram of the ridge regression analysis
+
+```{r}
+## use glmnet to fit ridge regression
+## glmnet fits using penalized L2 loss
+## first create an input matrix and output vector
+form  <- lcavol ~  lweight + age + lbph + lcp + pgg45 + lpsa + svi + gleason
+x_inp <- model.matrix(form, data=prostate_train)
+y_out <- prostate_train$lcavol
+fit <- glmnet(x=x_inp, y=y_out, lambda=seq(0, 2, 0.05), alpha = 0)
+print(fit$beta)
+```
+
+```{r}
+## functions to compute testing/training error with glmnet
+error <- function(dat, fit, lam, form, loss=L2_loss) {
+  x_inp <- model.matrix(form, data=dat)
+  y_out <- dat$lcavol
+  y_hat <- predict(fit, newx=x_inp, s=lam)  ## see predict.elnet
+  mean(loss(y_out, y_hat))
+}
+
+
+## plot path diagram
+plot(x=range(fit$lambda),
+     y=range(as.matrix(fit$beta)),
+     type='n',
+     xlab=expression(lambda),
+     ylab='Coefficients')
+for(i in 1:nrow(fit$beta)) {
+  points(x=fit$lambda, y=fit$beta[i,], pch=19, col='#00000055')
+  lines(x=fit$lambda, y=fit$beta[i,], col='#00000055')
+}
+text(x=0, y=fit$beta[,ncol(fit$beta)], 
+     labels=rownames(fit$beta),
+     xpd=NA, pos=4, srt=45)
+abline(h=0, lty=3, lwd=2)
+```
+
+
