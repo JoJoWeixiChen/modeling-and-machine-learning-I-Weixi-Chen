@@ -14,7 +14,7 @@ prostate <-
     'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/prostate.data'))
 
 ## subset to training examples
-prostate_train <- subset(prostate, train==TRUE)
+prostate_train <- subset(prostate, train==TRUE) 
 ```
 
 ## Question2: reproduce the correlations
