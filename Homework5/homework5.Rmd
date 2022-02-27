@@ -1,0 +1,311 @@
+---
+title: "Homework5"
+author: "Weixi Chen"
+date: "2/23/2022"
+output: github_document
+---
+
+# homework 5
+
+```{r}
+# read the dataset we need
+library('MASS') ## for 'mcycle'
+library('manipulate') ## for 'manipulate'
+
+y <- mcycle$accel
+x <- matrix(mcycle$times, length(mcycle$times), 1)
+
+data(mcycle)
+
+plot(x, y, xlab="Time (ms)", ylab="Acceleration (g)")
+```
+
+## Question1: randomly split the mcycle data
+
+```{r}
+set.seed(1)
+training_index <- sample(1:nrow(mcycle), dim(mcycle)[1]*0.75)
+training_data <- mcycle[training_index, ]
+validation_data <- mcycle[-training_index, ]
+```
+
+
+## Question2: Use Nadaraya-Waston method with the k-NN kernel function to predict the mean acceleration as a function of time
+
+```{r}
+## k-NN kernel function
+## x  - n x p matrix of training inputs
+## x0 - 1 x p input where to make prediction
+## k  - number of nearest neighbors
+kernel_k_nearest_neighbors <- function(x, x0, k=1) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+}
+```
+
+```{r}
+## Make predictions using the NW method
+## y  - n x 1 vector of training outputs
+## x  - n x p matrix of training inputs
+## x0 - m x p matrix where to make predictions
+## kern  - kernel function to use
+## ... - arguments to pass to kernel function
+nadaraya_watson <- function(y, x, x0, kern, ...) {
+  k <- t(apply(x0, 1, function(x0_) {
+    k_ <- kern(x, x0_, ...)
+    k_/sum(k_)
+  }))
+  yhat <- drop(k %*% y)
+  return(yhat)
+}
+```
+
+```{r}
+# we can get the predictions by using the function
+nadaraya_watson(as.matrix(training_data$accel), as.matrix(training_data$times), as.matrix(validation_data$times), kernel_k_nearest_neighbors)
+
+# also we can change the tuning parameter k in 'kernel_k_nearest_neighbors' to get a series of prediction models.
+```
+
+
+## Question3: compute and plot the training error, AIC, BIC, and validation error
+
+```{r}
+# the training error
+
+## loss function
+## y    - train/test y
+## yhat - predictions at train/test x
+loss_squared_error <- function(y, yhat)
+  (y - yhat)^2
+
+k1 <- seq(1, 15, 1)
+
+y_hat <- matrix(NA, nrow = dim(training_data)[1], ncol = length(k1))
+
+for (k2 in k1){
+  kernel_k_nearest_neighbors <- function(x, x0, k = k2) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+}
+  
+  y_hat[,k2] <- nadaraya_watson(as.matrix(training_data$accel), as.matrix(training_data$times), as.matrix(training_data$times), kernel_k_nearest_neighbors)
+}
+
+## test/train error
+## y    - train/test y
+## yhat - predictions at train/test x
+## loss - loss function
+error <- function(y, yhat, loss=loss_squared_error)
+  mean(loss(y, yhat))
+
+training_error <- c()
+for(x in 1:dim(y_hat)[2]){
+  training_error <- c(training_error, error(training_data$accel, y_hat[,x]))
+}
+
+plot(k1, training_error, type = "b", xlab = "tuning parameter(k)", ylab = "training error")
+```
+
+```{r}
+# AIC
+k1 <- seq(1, 15, 1)
+
+y_hat <- matrix(NA, nrow = dim(training_data)[1], ncol = length(k1))
+
+for (k2 in k1){
+  kernel_k_nearest_neighbors <- function(x, x0, k = k2) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+}
+  
+  y_hat[,k2] <- nadaraya_watson(as.matrix(training_data$accel), as.matrix(training_data$times), as.matrix(training_data$times), kernel_k_nearest_neighbors)
+}
+
+## y    - training y
+## yhat - predictions at training x
+## d    - effective degrees of freedom
+aic <- function(y, yhat, d)
+  error(y, yhat) + 2/length(y)*d
+
+aic1 <- c()
+for(x in 1:dim(y_hat)[2]){
+  aic1 <- c(aic1, aic(training_data$accel, y_hat[,x], d = 1))
+}
+
+plot(k1, aic1, type = "b", xlab = "tuning parameter(k)", ylab = "AIC")
+```
+
+```{r}
+# BIC
+k1 <- seq(1, 15, 1)
+
+y_hat <- matrix(NA, nrow = dim(training_data)[1], ncol = length(k1))
+
+for (k2 in k1){
+  kernel_k_nearest_neighbors <- function(x, x0, k = k2) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+}
+  
+  y_hat[,k2] <- nadaraya_watson(as.matrix(training_data$accel), as.matrix(training_data$times), as.matrix(training_data$times), kernel_k_nearest_neighbors)
+}
+
+## y    - training y
+## yhat - predictions at training x
+## d    - effective degrees of freedom
+bic <- function(y, yhat, d)
+  error(y, yhat) + log(length(y))/length(y)*d
+
+bic1 <- c()
+for(x in 1:dim(y_hat)[2]){
+  bic1 <- c(bic1, bic(training_data$accel, y_hat[,x], d = 1))
+}
+
+plot(k1, bic1, type = "b", xlab = "tuning parameter(k)", ylab = "BIC")
+```
+
+```{r}
+# Validation Error
+k1 <- seq(1, 15, 1)
+
+y_hat <- matrix(NA, nrow = dim(validation_data)[1], ncol = length(k1))
+
+for (k2 in k1){
+  kernel_k_nearest_neighbors <- function(x, x0, k = k2) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+}
+  
+  y_hat[,k2] <- nadaraya_watson(as.matrix(training_data$accel), as.matrix(training_data$times), as.matrix(validation_data$times), kernel_k_nearest_neighbors)
+}
+
+## test/train error
+## y    - train/test y
+## yhat - predictions at train/test x
+## loss - loss function
+error <- function(y, yhat, loss=loss_squared_error)
+  mean(loss(y, yhat))
+
+validation_error <- c()
+for(x in 1:dim(y_hat)[2]){
+  validation_error <- c(validation_error, error(validation_data$accel, y_hat[,x]))
+}
+
+plot(k1, validation_error, type = "b", xlab = "tuning parameter(k)", ylab = "Validation Error")
+```
+
+
+## Question4: 5-fold cross-validation
+
+```{r}
+library(plyr)
+CV <- function(k, size, seed){
+  cvlist <- list()
+  set.seed(seed)
+  n <- rep(1:k, ceiling(size/k))[1:size]
+  temp <- sample(n, size)
+  x <- 1:k
+  dataseq <- 1:size
+  cvlist <- lapply(x, function(x) dataseq[temp == x])
+  return(cvlist)
+}
+
+cv_index <- CV(5, size = dim(mcycle)[1], seed = 1)
+cv_index
+```
+
+```{r}
+# test Error
+k1 <- seq(1, 15, 1)
+
+test_error <- matrix(NA, nrow = 5, ncol = length(k1))
+
+for(index in 1:5){
+for (k2 in k1){
+  kernel_k_nearest_neighbors <- function(x, x0, k = k2) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+  }
+  
+  training_data <- mcycle[-cv_index[[index]],]
+  test_data <- mcycle[cv_index[[index]],]
+  
+  y_hat1 <- nadaraya_watson(as.matrix(training_data$accel), as.matrix(training_data$times), 
+                                as.matrix(test_data$times), kernel_k_nearest_neighbors)
+  test_error[index, k2] <- error(mcycle[cv_index[[index]],]$accel, y_hat1)
+  
+}
+}
+
+# The test error stores the test error for each piece of test data.
+test_error
+```
+
+
+## Question5: plot the test error
+
+```{r}
+stand_deviation <- apply(test_error, 2, sd)
+test_error1 <- apply(test_error, 2, mean)
+plot(k1, test_error1, type = "b", xlab = "tuning parameter(k)", ylab = "test error")
+segments(x0 = k1, y0 = test_error1 - stand_deviation/2, x1 = k1, y1 = test_error1 + stand_deviation/2)
+```
+
+## Question6: Interpret the figure
+
+From the figure above, we can find out that the 5-fold cross validation test error lower down first and then it becomes higher again. Thus, we can use k = 9 as the tuning parameter in our model.
