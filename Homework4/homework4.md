@@ -8,22 +8,25 @@ Weixi Chen
 ### a
 
 Considering that X is evenly distributed, so the fraction of available
-observations we will use is 10%.
+observations we will use is 90%\*10%(the samples in the range of
+\[5%,95%\])+10%\*7.5%(the samples in the range of \[0,5%\] and
+\[95%,100%\]) = 9.75%.
 
 ### b
 
-We use 1% of the available dataset on average, as we use 10% data from
-both X1 and X2, and then we will use 10% \* 10% = 1% data on average.
+We use 0.95% of the available dataset on average, as we use 9.75% data
+from both X1 and X2, and then we will use 9.75%\*9.75% = 0.95% data on
+average.
 
 ### c
 
-We will use (10%)<sup>100</sup> of data on average, and the reason is
+We will use (9.75%)<sup>100</sup> of data on average, and the reason is
 the same as the question b.
 
 ### d
 
 Every time when the dimension, p, increase by 1, the available data we
-use for predicting observation will decrease by 10%. So, when the
+use for predicting observation will decrease by 9.75%. So, when the
 dimension p is very large, there will be few training observations near
 any given test observations.
 
@@ -33,7 +36,7 @@ To make sure that we can use 10% of the available training data, we
 should let 10% of data be included into the hypercube. So the length of
 each side should meet the condition:
 
-*l*<sup>100</sup> = 10
+*l*<sup>100</sup> = 10%
 
 And we can get the result as: $l = \\sqrt\[100\]{10\\%}$
 
