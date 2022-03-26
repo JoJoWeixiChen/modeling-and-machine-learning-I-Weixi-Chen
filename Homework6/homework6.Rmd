@@ -1,0 +1,139 @@
+---
+title: "Homework6"
+author: "Weixi Chen"
+date: "3/26/2022"
+output: github_document
+---
+
+```{r}
+library('randomForest')  ## fit random forest
+library('dplyr')    ## data manipulation
+library('magrittr') ## for '%<>%' operator
+library('gpairs')   ## pairs plot
+library('viridis')  ## viridis color palette
+library('caret') ## 'createFolds'
+```
+
+```{r}
+# load the dataset we need
+vowel <- 
+  read.table(url(
+    'https://hastie.su.domains/ElemStatLearn/datasets/vowel.train'), sep = ",", header = TRUE)[,-1]
+```
+
+## Question1: Convert the type of response variable
+
+```{r}
+vowel %<>%
+  mutate_at(c('y'), as.factor)  
+```
+
+## Question2: Review "randomForest" document
+
+```{r}
+?randomForest
+```
+
+## Question3: fit the random forest model
+
+```{r}
+fit <- randomForest(x = vowel[,-1], y = vowel$y,  
+                    ntree = 500, mtry = 3, proximity=TRUE)
+
+print(fit)          ## summary of fit object
+plot(fit)           ## plot OOB MSE as function of # of trees
+importance(fit)     ## variable importance 
+varImpPlot(fit)     ## variable importance plot
+```
+
+## Question4: 5-fold CV and model tuning
+
+```{r}
+#split dataset
+vowel_flds  <- createFolds(vowel$y, k=5)
+print(vowel_flds)
+sapply(vowel_flds, length)  ## not all the same length
+```
+
+### the number of variables randomly sampled as candidates at each split
+
+```{r}
+set.seed(2)
+split_num <- c(3, 4, 5)
+cverr <- rep(NA, length(split_num))
+for (i in 1:length(split_num)) {
+  cverr1 <- rep(NA, length(vowel_flds))
+  for(j in 1:length(vowel_flds)) { ## for each fold
+    
+    ## get training and testing data
+    vowel_train <- vowel[-vowel_flds[[j]],]
+    vowel_test <- vowel[ vowel_flds[[j]],]
+    
+    ## fit random forest model to training data
+    randomforest_fit <- randomForest(x = vowel_train[,-1], y = vowel_train$y,  
+                    ntree = 500, mtry = split_num[i], proximity=TRUE)
+    
+    ## compute test error on testing data
+    pre_tst <- predict(randomforest_fit, vowel_test)
+    cverr1[j] <- sum(pre_tst != vowel_test$y)/length(pre_tst)
+  }
+  cverr[i] <- mean(cverr1)
+}
+cverr
+```
+
+So we should choose 3 as the number of variables randomly sampled as candidates at each split.
+
+### the minimum size of terminal nodes
+
+```{r}
+set.seed(3)
+node_size <- c(1, 5, 10, 20, 40, 80)
+cverr <- rep(NA, length(node_size))
+for (i in 1:length(node_size)) {
+  cverr1 <- rep(NA, length(vowel_flds))
+  for(j in 1:length(vowel_flds)) { ## for each fold
+    
+    ## get training and testing data
+    vowel_train <- vowel[-vowel_flds[[j]],]
+    vowel_test <- vowel[ vowel_flds[[j]],]
+    
+    ## fit random forest model to training data
+    randomforest_fit <- randomForest(x = vowel_train[,-1], y = vowel_train$y,  
+                    ntree = 500, mtry = 3, nodesize = node_size[i], proximity=TRUE)
+    
+    ## compute test error on testing data
+    pre_tst <- predict(randomforest_fit, vowel_test[, -1])
+    cverr1[j] <- sum(pre_tst != vowel_test$y)/length(pre_tst)
+  }
+  cverr[i] <- mean(cverr1)
+}
+cverr
+```
+
+So we should choose 1 as the minimum size of terminal nodes。
+
+## Question5: compute misclassification rate
+
+```{r}
+# load the dataset we need
+vowel_test <- 
+  read.table(url(
+    'https://hastie.su.domains/ElemStatLearn/datasets/vowel.test'), sep = ",", header = TRUE)[,-1]
+
+vowel_test %<>%
+  mutate_at(c('y'), as.factor)  
+```
+
+```{r}
+set.seed(4)
+randomforest_fit <- randomForest(x = vowel[,-1], y = vowel$y, 
+                    ntree = 500, mtry = 3, nodesize = 1,  importance=TRUE, proximity=TRUE)
+    
+## compute test error on testing data
+pre_tst <- predict(randomforest_fit, vowel_test)
+mis_rate = sum(pre_tst != vowel_test$y)/length(pre_tst)
+mis_rate
+```
+
+So the misclassification rate is 0.4004329.
