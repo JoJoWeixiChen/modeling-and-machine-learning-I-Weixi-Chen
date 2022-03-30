@@ -308,4 +308,4 @@ segments(x0 = k1, y0 = test_error1 - stand_deviation/2, x1 = k1, y1 = test_error
 
 ## Question6: Interpret the figure
 
-From the figure above, we can find out that the 5-fold cross validation test error lower down first and then it becomes higher again. Thus, we can use k = 9 as the tuning parameter in our model.
+From the figure above, we can find out that the 5-fold cross validation test error lower down first and then it becomes higher again. Thus, we can find k = 9 is the model with best performance. And from the perspective of "one standard error" rule, we should find the simplest model in the range of the best model's one standard error. So, we finally choose k = 5 as the final tuning parameter.
